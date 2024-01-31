@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+
+    <title>ChatBot</title>
+</head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Sora&display=swap');
+
+    * {
+        font-family: 'Sora', sans-serif;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        background-color: #202123;
+    }
+
+    body {
+        font-family: 'Sora', sans-serif;
+        background-color: #343541;
+        margin: 0;
+        height: 100vh;
+    }
+
+    /* Estilo del contenedor del chat */
+    .result {
+        background-color: #343541;
+        height: calc(100% - 110px);
+        width: 95vw;
+        margin: auto;
+        overflow-y: scroll;
+        color: aliceblue;
+        font-size: large;
+        padding-right: 8px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }
+
+    /* Estilo de los mensajes del chat */
+    .result p {
+        background-color: #343541;
+        padding: 5px 10px;
+        border-radius: 5px;
+        margin: 5px 0;
+        color: rgb(194, 228, 255);
+    }
+
+    /* Estilo de la barra de desplazamiento */
+    .result::-webkit-scrollbar {
+        width: 8px;
+        background-color: #343541;
+        /* Color de fondo de la barra de desplazamiento */
+    }
+
+    .result::-webkit-scrollbar-thumb {
+        background: #888;
+        /* Color del thumb de la barra de desplazamiento */
+        border-radius: 10px;
+        /* Borde redondeado del thumb */
+    }
+
+    .result::-webkit-scrollbar-track {
+        background: #343541;
+        /* Color de fondo de la pista de la barra de desplazamiento */
+    }
+
+    .result::-webkit-scrollbar-thumb:hover {
+        background: #555;
+        /* Color del thumb cuando se pasa el cursor sobre él */
+    }
+
+    .questionsForm {
+        margin: auto;
+        width: 95vw;
+        display: flex;
+        user-select: none;
+        /* Evita la selección de texto en el elemento */
+    }
+
+    .questionText {
+        margin: auto;
+        width: 100%;
+        height: 60px;
+        padding: 0;
+        background-color: #40414f;
+        color: aliceblue;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+        border: none;
+        padding-left: 20px;
+        padding-right: 20px;
+        font-size: 18px;
+        outline: 0px;
+    }
+
+    .questionText:focus {
+        border: none;
+    }
+
+    .questionButton {
+        width: 100px;
+        text-align: center;
+        background-color: #40414f;
+        color: rgba(240, 248, 255, 0.521);
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .borderFocus {
+        color: rgb(73, 232, 166);
+    }
+
+    .questionButton i {
+        font-size: 20px;
+        margin-right: 0px;
+        /* Espacio entre el ícono y el texto "Enviar" */
+        background-color: #40414f;
+
+    }
+
+    footer {
+        background-color: #343541;
+        padding: 0.5rem 0 0;
+    }
+
+    footer p {
+        font-size: 0.8rem;
+        color: aliceblue;
+        text-align: center;
+        background-color: #343541;
+    }
+</style>
+
+<body>
+    <div class="result" id="result"></div>
+    <form class="questionsForm" id="miInput" style="background: transparent">
+        <input tabindex="0" class="questionText" id="textoQuestion" type="text" placeholder="Escribe aquí"
+            onkeydown="ejecutarSiEsEnter(event) " autocomplete="off" />
+        <button class="questionButton" id="buttonQuestion" type="button"
+            onclick="traducir(document.getElementById('textoQuestion').value)">
+            <i class="fas fa-comment"></i>
+        </button>
+    </form>
+    <div class="container-fluid">
+        <footer class="bg-dark text-light py-4">
+            <div class="container">
+                <div class="row">
+                    <p class="mb-3 mb-md-0 text-muted">&copy; 2023 Company, Inc</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+
+<script>
+    // Variable para almacenar el ID del temporizador para la ejecución diferida
+    let timeoutId;
+    // Función para traducir texto utilizando la API fetch
+    const traducir = (texto) => {
+        // Si el texto de entrada está vacío, no hacer nada
+        if (texto === "") {
+            return
+        }
+        // Limpiar el campo de entrada
+        document.getElementById('textoQuestion').value = "";
+
+        // Obtener la traducción desde el servidor
+        fetch('/question?text=' + texto)
+            .then(response => response.json())
+            .then(data => {
+                // Crear nuevos elementos de párrafo para la entrada del usuario y el texto traducido
+                let nuevoElemento1 = document.createElement("p");
+                nuevoElemento1.textContent = "Tu: " + texto;
+                let nuevoElemento2 = document.createElement("p");
+                nuevoElemento2.textContent = data.translation;
+
+                // Obtener el div de resultado y agregar los nuevos elementos
+                let divResult = document.getElementById('result')
+                divResult.appendChild(nuevoElemento1);
+                divResult.appendChild(nuevoElemento2);
+
+                // Desplazarse hacia la parte inferior del div de resultado
+                divResult.scrollTop = divResult.scrollHeight;
+            })
+            .catch(error => {
+                // Registrar y manejar errores
+                console.error('Error:', error);
+            });
+    }
+    // Función para ejecutar la traducción si se presiona la tecla Enter
+    function ejecutarSiEsEnter(event) {
+        if (event.key === 'Enter') {
+            traducir(event.target.value);
+            event.preventDefault();
+        }
+    }
+    // Evitar la acción predeterminada cuando se presiona la tecla Enter en el campo de entrada
+    document.getElementById("miInput").addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+        }
+    });
+    // Agregar escuchadores de eventos de enfoque y desenfoque al campo de entrada y al botón para estilizar
+    const componente1 = document.getElementById('textoQuestion');
+    const componente2 = document.getElementById('buttonQuestion');
+
+    componente1.addEventListener('focus', () => {
+        componente2.classList.add('borderFocus');
+    });
+
+    componente1.addEventListener('blur', () => {
+        componente2.classList.remove('borderFocus');
+    });
+</script>
+
+</html>
